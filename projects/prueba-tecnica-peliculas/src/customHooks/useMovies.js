@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { getQuery } from '../utils';
 
 export function useMovie({ query, sort }) {
@@ -7,7 +7,7 @@ export function useMovie({ query, sort }) {
   const [error, setError] = useState(null)
 
   const lastQuery = useRef('')
-  const currentSort = useRef(sort);
+  const lastSort = useRef(sort);
 
 
   const mapMovie = movie => ({
@@ -21,7 +21,8 @@ export function useMovie({ query, sort }) {
     return [...movies].sort((a, b) => a.title.localeCompare(b.title));
   }
 
-  const getMovies = () => {
+  // useCallback(arrow-function) === useMemo(()=> {return arrow-function})
+  const getMovies = useCallback(({ query }) => {
     if (!query || query === lastQuery.current) return
     setLoading(true);
     lastQuery.current = query
@@ -48,15 +49,13 @@ export function useMovie({ query, sort }) {
       .finally(() => {
         setLoading(false)
       });
-  }
-  if (sort) {
-    const sortedMovies = {
-      ...res,
-      movies: sortMovies(res.movies)
-    }
-    return { ...sortedMovies, getMovies, loading }
-  } else {
-    return { ...res, getMovies, loading }
-  }
+  }, [])
+
+  const sortedMovies = useMemo(() => {
+    return sort
+      ? { ...res, movies: sortMovies(res.movies) }
+      : res
+  }, [sort, res])
+  return { ...sortedMovies, getMovies, loading }
 }
 

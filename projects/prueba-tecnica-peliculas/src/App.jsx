@@ -1,9 +1,10 @@
 import './App.css'
 import { Movie } from './components/Movie';
 // import { useRef } from 'react';
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useMovie } from './customHooks/useMovies';
 import { useSearch } from './customHooks/useSearch';
+import debounce from 'just-debounce-it';
 
 export function App() {
   const [sort, setSort] = useState(false);
@@ -21,12 +22,15 @@ export function App() {
   // confiando en los elemntos del dom
   // de forma controlada seria mediante un estado
 
+  const debounceGetMovies = useCallback(debounce(query => {
+    getMovies({ query: query })
+  }, 400), [])
   const handlerSort = () => {
     setSort(!sort);
   }
   const handleSubmit = (event) => {
     event.preventDefault();
-    getMovies();
+    getMovies({ query });
 
     // const fields = new FormData(event.target)
     // const query = fields.get('query')
@@ -41,6 +45,7 @@ export function App() {
   const handleChange = (event) => {
     const newQuery = event.target.value;
     updateQuery(newQuery);
+    debounceGetMovies(newQuery);
   }
 
   return (
